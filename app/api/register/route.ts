@@ -47,8 +47,10 @@ export async function POST(request: Request) {
   }
 
   // Honeypot. Bots fill every field they find; people never see this one.
-  // Answer as if it worked so the bot has nothing to learn from.
-  if (text(body.website, 200)) {
+  // Answer as if it worked so the bot has nothing to learn from — but log it,
+  // so a real entry swallowed by a rogue autofill is at least traceable.
+  if (text(body.kedvenc_szin, 200)) {
+    console.warn("honeypot triggered, submission dropped", { ip, name: text(body.p1_name, 40) });
     return NextResponse.json({ ok: true });
   }
 

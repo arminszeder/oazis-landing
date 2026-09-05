@@ -84,7 +84,7 @@ export function RegisterButtons() {
           note: data.get("note"),
           sources: data.getAll("source"),
           newsletter: data.get("newsletter") === "on",
-          website: data.get("website"), // honeypot
+          kedvenc_szin: data.get("kedvenc_szin"), // honeypot
         }),
       });
 
@@ -151,10 +151,13 @@ export function RegisterButtons() {
               </div>
             ) : (
               <form className="form" onSubmit={submit}>
+                {/* Honeypot. Deliberately not named website/url/company: browser
+                    autofill and password managers recognise those and would fill
+                    it in for a real person, silently binning their entry. */}
                 <div className="hp" aria-hidden="true">
                   <label>
-                    Weboldal
-                    <input name="website" tabIndex={-1} autoComplete="off" />
+                    Kedvenc szín
+                    <input name="kedvenc_szin" tabIndex={-1} autoComplete="off" />
                   </label>
                 </div>
 
