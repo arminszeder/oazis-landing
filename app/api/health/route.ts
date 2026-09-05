@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const problem = configProblem();
   if (problem) {
-    return NextResponse.json({ ok: false, config: problem }, { status: 503 });
+    return NextResponse.json({ ok: false, ...deployment(), config: problem }, { status: 503 });
   }
 
   try {
@@ -24,5 +24,15 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json({ ok: true, config: "env vars set", database: "reachable" });
+  return NextResponse.json({ ok: true, ...deployment(), config: "env vars set", database: "reachable" });
+}
+
+// Names only, never values: enough to tell "set on the wrong environment" from
+// "not set at all" from "set under a different name", without leaking anything.
+function deployment() {
+  return {
+    vercelEnv: process.env.VERCEL_ENV ?? "not on vercel",
+    commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "unknown",
+    supabaseVarsVisible: Object.keys(process.env).filter((k) => /SUPABASE/i.test(k)).sort(),
+  };
 }
