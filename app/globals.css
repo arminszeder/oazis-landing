@@ -517,8 +517,10 @@ textarea {
   margin-top: clamp(16px, 3vh, 30px);
 }
 
+/* First thing in the form, under the modal title — the form's own top padding
+   sets the gap, so it needs no margin of its own. */
 .form .capacity {
-  margin-top: 4px;
+  margin-top: 0;
 }
 
 /* ---------------------------------------------------------------- modal -- */

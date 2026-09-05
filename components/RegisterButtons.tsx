@@ -158,6 +158,8 @@ export function RegisterButtons() {
             </div>
 
             <form className="form" onSubmit={submit}>
+              <CapacityBar />
+
               {/* Honeypot. Deliberately not named website/url/company: browser
                   autofill and password managers recognise those and would fill
                   it in for a real person, silently binning their entry. */}
@@ -237,7 +239,6 @@ export function RegisterButtons() {
                     </label>
                   ))}
                 </div>
-                <CapacityBar />
               </fieldset>
 
               <fieldset className="fieldset fieldset--divided">
