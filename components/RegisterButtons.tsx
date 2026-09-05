@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { CapacityBar } from "@/components/CapacityBar";
 import {
   CATEGORIES,
   ENTRY_FEE,
@@ -243,6 +244,7 @@ export function RegisterButtons() {
                       </label>
                     ))}
                   </div>
+                  <CapacityBar />
                 </fieldset>
 
                 <fieldset className="fieldset fieldset--divided">

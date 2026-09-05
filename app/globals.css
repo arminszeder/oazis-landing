@@ -442,6 +442,85 @@ textarea {
   white-space: nowrap;
 }
 
+/* Limited-places bar. Fills to SPOTS_FILLED_PERCENT on mount the way a loading
+   bar would, then keeps a slow sheen crossing the filled part so it reads as
+   live rather than as a static statistic. */
+.capacity {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.capacity__label {
+  font-size: clamp(11px, 1.6vh, 13px);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.capacity__track {
+  position: relative;
+  height: 9px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line-input);
+  overflow: hidden;
+}
+
+.capacity__fill {
+  position: relative;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(233, 162, 74, 0.72), var(--amber));
+  transform-origin: left center;
+  animation: capacityFill 1.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  overflow: hidden;
+}
+
+.capacity__fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 232, 200, 0.55), transparent);
+  animation: capacitySheen 2.6s ease-in-out 1.4s infinite;
+}
+
+@keyframes capacityFill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes capacitySheen {
+  0% {
+    transform: translateX(-110%);
+  }
+  55%,
+  100% {
+    transform: translateX(210%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capacity__fill {
+    animation: none;
+  }
+  .capacity__fill::after {
+    display: none;
+  }
+}
+
+/* Spacing for each of the two places it appears. */
+.panel .capacity {
+  margin-top: clamp(16px, 2.6vh, 26px);
+}
+
+.form .capacity {
+  margin-top: 4px;
+}
+
 /* ---------------------------------------------------------------- modal -- */
 
 .backdrop {

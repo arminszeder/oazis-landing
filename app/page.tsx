@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CapacityBar } from "@/components/CapacityBar";
 import { Leaves } from "@/components/Leaves";
 import { RegisterButtons } from "@/components/RegisterButtons";
 import { CATEGORIES, PHONE, PHONE_HREF, SCHEDULE, VENUE } from "@/lib/tournament";
@@ -97,6 +98,8 @@ export default function Home() {
               </div>
             ))}
           </div>
+
+          <CapacityBar />
 
           <div className="panel__section">
             <h2 className="panel__label">A nevezés mellé adjuk ajándékba</h2>

@@ -32,6 +32,11 @@ export const SOURCES = [
   { value: "referral", label: "Valaki ajánlásából / meghívásából" },
 ] as const;
 
+// Share of places taken, 0-100. The bar under the schedule and the one in the
+// form both read this — change it here and both move.
+export const SPOTS_FILLED_PERCENT = 40;
+export const CAPACITY_LABEL = "Limitált helyek";
+
 export const ENTRY_FEE = "12 000 Ft / fő";
 export const VENUE = "Oázis Padel, Mosonmagyaróvár, Éger utca 2.";
 export const PHONE = "06 20 611 3608";
