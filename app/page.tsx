@@ -73,6 +73,16 @@ export default function Home() {
               Helyszín: <strong>{VENUE}</strong>
             </div>
           </div>
+
+          {/* Stacked layout only: on a phone the schedule panel sits below the
+              fold, so point at it. Hidden from 736px up, where it is already
+              beside the hero and there is nothing to scroll to. */}
+          <div className="scroll-hint" aria-hidden="true">
+            <svg viewBox="0 0 44 34" width="36" height="28">
+              <path className="scroll-hint__chevron scroll-hint__chevron--lead" d="M5 5 L22 20 L39 5" />
+              <path className="scroll-hint__chevron scroll-hint__chevron--trail" d="M5 14 L22 29 L39 14" />
+            </svg>
+          </div>
         </div>
 
         <section className="panel">

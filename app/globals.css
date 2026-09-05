@@ -283,6 +283,53 @@ textarea {
   font-weight: inherit;
 }
 
+/* Scroll cue. Two chevrons, the leading one full amber and the trailing one
+   paler, drifting down out of phase so they cascade toward the panel below. */
+.scroll-hint {
+  display: none;
+}
+
+@media (max-width: 735px) {
+  .scroll-hint {
+    display: flex;
+    justify-content: center;
+    margin-top: clamp(20px, 4vh, 34px);
+  }
+}
+
+.scroll-hint__chevron {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: chevronDrift 1.9s ease-in-out infinite;
+}
+
+.scroll-hint__chevron--lead {
+  stroke: var(--amber);
+}
+
+.scroll-hint__chevron--trail {
+  stroke: rgba(233, 162, 74, 0.35);
+  animation-delay: 0.18s;
+}
+
+@keyframes chevronDrift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-hint__chevron {
+    animation: none;
+  }
+}
+
 /* ---------------------------------------------------------------- panel -- */
 
 .panel {
