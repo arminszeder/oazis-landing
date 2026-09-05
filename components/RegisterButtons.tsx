@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CapacityBar } from "@/components/CapacityBar";
 import {
@@ -20,20 +21,17 @@ const COPY = {
     p1Label: "1. játékos",
     p1SizeLabel: "1. játékos mezmérete",
     phoneLabel: "Kapcsolattartó telefonszáma",
-    success:
-      "Köszönjük! A beosztásról és a fizetés részleteiről a megadott telefonszámon jelentkezünk.",
   },
   solo: {
     title: "Nincs még párom",
     p1Label: "Adataid",
     p1SizeLabel: "Mezméreted",
     phoneLabel: "Telefonszámod",
-    success:
-      "Köszönjük! Keresünk hozzád párt a saját szintedről, és a megadott telefonszámon jelentkezünk a részletekkel.",
   },
 } as const;
 
 export function RegisterButtons() {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +59,7 @@ export function RegisterButtons() {
       if (e.key === "Escape") close();
     };
     document.addEventListener("keydown", onKey);
+    router.prefetch("/koszonjuk");
 
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -70,7 +69,7 @@ export function RegisterButtons() {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previous;
     };
-  }, [mode, close]);
+  }, [mode, close, router]);
 
   const dialCode = PHONE_COUNTRIES.find((c) => c.code === country) ?? PHONE_COUNTRIES[0];
 
@@ -107,6 +106,9 @@ export function RegisterButtons() {
         throw new Error(body?.error ?? "Ismeretlen hiba");
       }
       setStatus("done");
+      // Leave the body-scroll lock to the unmount cleanup and hand the visitor
+      // to the confirmation page.
+      router.push(`/koszonjuk?tipus=${mode}`);
     } catch (err) {
       setStatus("idle");
       setError(
@@ -155,156 +157,146 @@ export function RegisterButtons() {
               </button>
             </div>
 
-            {status === "done" ? (
-              <div className="success">
-                <div className="success__title">Nevezés elküldve</div>
-                <p className="success__text">{copy.success}</p>
-                <button type="button" className="btn btn--primary" onClick={close}>
-                  Bezárom
-                </button>
+            <form className="form" onSubmit={submit}>
+              {/* Honeypot. Deliberately not named website/url/company: browser
+                  autofill and password managers recognise those and would fill
+                  it in for a real person, silently binning their entry. */}
+              <div className="hp" aria-hidden="true">
+                <label>
+                  Kedvenc szín
+                  <input name="kedvenc_szin" tabIndex={-1} autoComplete="off" />
+                </label>
               </div>
-            ) : (
-              <form className="form" onSubmit={submit}>
-                {/* Honeypot. Deliberately not named website/url/company: browser
-                    autofill and password managers recognise those and would fill
-                    it in for a real person, silently binning their entry. */}
-                <div className="hp" aria-hidden="true">
-                  <label>
-                    Kedvenc szín
-                    <input name="kedvenc_szin" tabIndex={-1} autoComplete="off" />
-                  </label>
-                </div>
 
+              <fieldset className="player">
+                <legend className="player__legend">{copy.p1Label}</legend>
+                <label className="field">
+                  Teljes név
+                  <input className="input" required name="p1name" autoComplete="name" />
+                </label>
+                <SizePicker name="p1size" label={copy.p1SizeLabel} />
+              </fieldset>
+
+              {mode === "pair" && (
                 <fieldset className="player">
-                  <legend className="player__legend">{copy.p1Label}</legend>
+                  <legend className="player__legend">2. játékos</legend>
                   <label className="field">
                     Teljes név
-                    <input className="input" required name="p1name" autoComplete="name" />
+                    <input className="input" required name="p2name" />
                   </label>
-                  <SizePicker name="p1size" label={copy.p1SizeLabel} />
+                  <SizePicker name="p2size" label="2. játékos mezmérete" />
                 </fieldset>
+              )}
 
-                {mode === "pair" && (
-                  <fieldset className="player">
-                    <legend className="player__legend">2. játékos</legend>
-                    <label className="field">
-                      Teljes név
-                      <input className="input" required name="p2name" />
-                    </label>
-                    <SizePicker name="p2size" label="2. játékos mezmérete" />
-                  </fieldset>
-                )}
+              <fieldset className="fieldset fieldset--divided">
+                <legend className="legend">{copy.phoneLabel}</legend>
+                <div className="phone-row">
+                  <label className="field">
+                    Ország
+                    <select
+                      className="input select"
+                      name="country"
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value as CountryCode)}
+                    >
+                      {PHONE_COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    Telefonszám
+                    <span className="phone-field">
+                      <span className="phone-field__prefix">{dialCode.prefix}</span>
+                      <input
+                        className="phone-field__number"
+                        required
+                        type="tel"
+                        name="phone"
+                        inputMode="tel"
+                        autoComplete="tel-national"
+                        placeholder={dialCode.example}
+                      />
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
 
-                <fieldset className="fieldset fieldset--divided">
-                  <legend className="legend">{copy.phoneLabel}</legend>
-                  <div className="phone-row">
-                    <label className="field">
-                      Ország
-                      <select
-                        className="input select"
-                        name="country"
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value as CountryCode)}
-                      >
-                        {PHONE_COUNTRIES.map((c) => (
-                          <option key={c.code} value={c.code}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="field">
-                      Telefonszám
-                      <span className="phone-field">
-                        <span className="phone-field__prefix">{dialCode.prefix}</span>
-                        <input
-                          className="phone-field__number"
-                          required
-                          type="tel"
-                          name="phone"
-                          inputMode="tel"
-                          autoComplete="tel-national"
-                          placeholder={dialCode.example}
-                        />
+              <fieldset className="fieldset fieldset--divided">
+                <legend className="legend">Kategória</legend>
+                <div className="options">
+                  {CATEGORIES.map((cat) => (
+                    <label className="choice choice--wide" key={cat.name}>
+                      <span className="choice__name">
+                        <input type="radio" required name="category" value={cat.name} />
+                        {cat.name}
                       </span>
+                      <span className="choice__time">{cat.time}</span>
                     </label>
-                  </div>
-                </fieldset>
-
-                <fieldset className="fieldset fieldset--divided">
-                  <legend className="legend">Kategória</legend>
-                  <div className="options">
-                    {CATEGORIES.map((cat) => (
-                      <label className="choice choice--wide" key={cat.name}>
-                        <span className="choice__name">
-                          <input type="radio" required name="category" value={cat.name} />
-                          {cat.name}
-                        </span>
-                        <span className="choice__time">{cat.time}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <CapacityBar />
-                </fieldset>
-
-                <fieldset className="fieldset fieldset--divided">
-                  <legend className="legend">Hol hallottál a versenyről? (opcionális)</legend>
-                  <div className="checks">
-                    {SOURCES.map((source) => (
-                      <label className="check" key={source.value}>
-                        <input type="checkbox" name="source" value={source.value} />
-                        {source.label}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-                <div className="fieldset fieldset--divided">
-                  <label className="check check--top">
-                    <input type="checkbox" name="newsletter" />
-                    <span>
-                      Szeretnék értesülni a jövőbeli Oázis Padel versenyekről és eseményekről
-                      (opcionális)
-                    </span>
-                  </label>
-                  <label className="check check--top">
-                    <input type="checkbox" required name="consent" />
-                    <span>
-                      Tudomásul vettem, hogy a versenyen való részvétel fizetési kötelezettséggel
-                      jár
-                    </span>
-                  </label>
-                  <p className="fine fine--spaced">
-                    Az adataidat kizárólag a verseny szervezéséhez és kapcsolattartáshoz használjuk.
-                    Adatkezelő: Oázis Padel. Az adatokat harmadik félnek nem adjuk át, és a verseny
-                    után 12 hónappal töröljük.
-                  </p>
-                  <p className="fine">
-                    A jelentkezésemmel tudomásul veszem, hogy a szervezők fenntarthatják a jogot
-                    arra, hogy megítélésük szerint megváltoztassák egy csapat szintjét.
-                  </p>
+                  ))}
                 </div>
+                <CapacityBar />
+              </fieldset>
 
-                <div className="fee">
-                  <div className="legend">Nevezési díj</div>
-                  <div className="fee__amount">{ENTRY_FEE}</div>
+              <fieldset className="fieldset fieldset--divided">
+                <legend className="legend">Hol hallottál a versenyről? (opcionális)</legend>
+                <div className="checks">
+                  {SOURCES.map((source) => (
+                    <label className="check" key={source.value}>
+                      <input type="checkbox" name="source" value={source.value} />
+                      {source.label}
+                    </label>
+                  ))}
                 </div>
+              </fieldset>
 
-                {error && (
-                  <p className="error" role="alert">
-                    {error}
-                  </p>
-                )}
+              <div className="fieldset fieldset--divided">
+                <label className="check check--top">
+                  <input type="checkbox" name="newsletter" />
+                  <span>
+                    Szeretnék értesülni a jövőbeli Oázis Padel versenyekről és eseményekről
+                    (opcionális)
+                  </span>
+                </label>
+                <label className="check check--top">
+                  <input type="checkbox" required name="consent" />
+                  <span>
+                    Tudomásul vettem, hogy a versenyen való részvétel fizetési kötelezettséggel
+                    jár
+                  </span>
+                </label>
+                <p className="fine fine--spaced">
+                  Az adataidat kizárólag a verseny szervezéséhez és kapcsolattartáshoz használjuk.
+                  Adatkezelő: Oázis Padel. Az adatokat harmadik félnek nem adjuk át, és a verseny
+                  után 12 hónappal töröljük.
+                </p>
+                <p className="fine">
+                  A jelentkezésemmel tudomásul veszem, hogy a szervezők fenntarthatják a jogot
+                  arra, hogy megítélésük szerint megváltoztassák egy csapat szintjét.
+                </p>
+              </div>
 
-                <button
-                  type="submit"
-                  className="btn btn--primary submit"
-                  disabled={status === "sending"}
-                >
-                  {status === "sending" ? "Küldés…" : "Nevezés elküldése"}
-                </button>
-              </form>
-            )}
+              <div className="fee">
+                <div className="legend">Nevezési díj</div>
+                <div className="fee__amount">{ENTRY_FEE}</div>
+              </div>
+
+              {error && (
+                <p className="error" role="alert">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className="btn btn--primary submit"
+                disabled={status === "sending"}
+              >
+                {status === "sending" ? "Küldés…" : "Nevezés elküldése"}
+              </button>
+            </form>
           </div>
         </div>
       )}
