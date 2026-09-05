@@ -67,6 +67,8 @@ export default function Home() {
             ))}
           </div>
 
+          <CapacityBar />
+
           <RegisterButtons />
 
           <div className="venue">
@@ -98,8 +100,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-
-          <CapacityBar />
 
           <div className="panel__section">
             <h2 className="panel__label">A nevezés mellé adjuk ajándékba</h2>

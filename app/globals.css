@@ -513,8 +513,8 @@ textarea {
 }
 
 /* Spacing for each of the two places it appears. */
-.panel .capacity {
-  margin-top: clamp(16px, 2.6vh, 26px);
+.hero .capacity {
+  margin-top: clamp(16px, 3vh, 30px);
 }
 
 .form .capacity {
