@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { serverClient } from "@/lib/supabase";
-import { CATEGORY_NAMES, SIZES, SOURCE_VALUES } from "@/lib/tournament";
+import { CATEGORY_NAMES, PHONE_PREFIXES, SIZES, SOURCE_VALUES } from "@/lib/tournament";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_NAME = 120;
 const MAX_PHONE = 40;
-const MAX_NOTE = 2000;
 
 // Coarse per-IP throttle. Serverless instances each keep their own map, so this
 // stops a bored browser tab rather than a determined attacker — the real barrier
@@ -71,8 +70,14 @@ export async function POST(request: Request) {
   const p1_name = text(body.p1_name, MAX_NAME);
   if (!p1_name) return fail("A név megadása kötelező.");
 
+  // The form sends "<dial code> <local number>". Pin the dial code to the three
+  // countries the form offers rather than trusting whatever arrives.
   const p1_phone = text(body.p1_phone, MAX_PHONE);
-  if ((p1_phone.match(/\d/g) ?? []).length < 6) {
+  const prefix = PHONE_PREFIXES.find((p) => p1_phone.startsWith(p));
+  if (!prefix) return fail("Válassz országhívószámot.");
+
+  const localDigits = (p1_phone.slice(prefix.length).match(/\d/g) ?? []).length;
+  if (localDigits < 6 || localDigits > 12) {
     return fail("Adj meg egy érvényes telefonszámot.");
   }
 
@@ -102,7 +107,6 @@ export async function POST(request: Request) {
     p1_size,
     p2_name,
     p2_size,
-    note: text(body.note, MAX_NOTE) || null,
     sources,
     newsletter: body.newsletter === true,
   };

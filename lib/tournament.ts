@@ -18,6 +18,14 @@ export const SCHEDULE = [
 
 export const SIZES = ["S", "M", "L", "XL"] as const;
 
+// Entrants come from the tri-border area, so the dial code is a choice rather
+// than an assumption. Picking the country fills the prefix in for them.
+export const PHONE_COUNTRIES = [
+  { code: "HU", name: "Magyarország", prefix: "+36", example: "20 611 3608" },
+  { code: "AT", name: "Ausztria", prefix: "+43", example: "660 1234567" },
+  { code: "SK", name: "Szlovákia", prefix: "+421", example: "901 234 567" },
+] as const;
+
 export const SOURCES = [
   { value: "social", label: "Közösségi médián (Facebook vagy Instagram)" },
   { value: "messenger", label: "Messenger csoportban" },
@@ -33,6 +41,8 @@ export type CategoryName = (typeof CATEGORIES)[number]["name"];
 export type Size = (typeof SIZES)[number];
 export type SourceValue = (typeof SOURCES)[number]["value"];
 export type Mode = "pair" | "solo";
+export type CountryCode = (typeof PHONE_COUNTRIES)[number]["code"];
 
 export const CATEGORY_NAMES: readonly string[] = CATEGORIES.map((c) => c.name);
 export const SOURCE_VALUES: readonly string[] = SOURCES.map((s) => s.value);
+export const PHONE_PREFIXES: readonly string[] = PHONE_COUNTRIES.map((c) => c.prefix);

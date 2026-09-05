@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CATEGORIES, ENTRY_FEE, SIZES, SOURCES, type Mode } from "@/lib/tournament";
+import {
+  CATEGORIES,
+  ENTRY_FEE,
+  PHONE_COUNTRIES,
+  SIZES,
+  SOURCES,
+  type CountryCode,
+  type Mode,
+} from "@/lib/tournament";
 
 type Status = "idle" | "sending" | "done";
 
@@ -10,7 +18,7 @@ const COPY = {
     title: "Van már párom",
     p1Label: "1. játékos",
     p1SizeLabel: "1. játékos mezmérete",
-    noteLabel: "Megjegyzés",
+    phoneLabel: "Kapcsolattartó telefonszáma",
     success:
       "Köszönjük! A beosztásról és a fizetés részleteiről a megadott telefonszámon jelentkezünk.",
   },
@@ -18,7 +26,7 @@ const COPY = {
     title: "Nincs még párom",
     p1Label: "Adataid",
     p1SizeLabel: "Mezméreted",
-    noteLabel: "Játékszint, megjegyzés",
+    phoneLabel: "Telefonszámod",
     success:
       "Köszönjük! Keresünk hozzád párt a saját szintedről, és a megadott telefonszámon jelentkezünk a részletekkel.",
   },
@@ -28,6 +36,7 @@ export function RegisterButtons() {
   const [mode, setMode] = useState<Mode | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [country, setCountry] = useState<CountryCode>("HU");
   const closeRef = useRef<HTMLButtonElement>(null);
 
   const close = useCallback(() => {
@@ -40,6 +49,7 @@ export function RegisterButtons() {
     setMode(next);
     setStatus("idle");
     setError(null);
+    setCountry("HU");
   };
 
   // Esc closes, and the page behind the modal must not scroll under it.
@@ -61,6 +71,8 @@ export function RegisterButtons() {
     };
   }, [mode, close]);
 
+  const dialCode = PHONE_COUNTRIES.find((c) => c.code === country) ?? PHONE_COUNTRIES[0];
+
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!mode || status === "sending") return;
@@ -68,6 +80,8 @@ export function RegisterButtons() {
     const data = new FormData(e.currentTarget);
     setStatus("sending");
     setError(null);
+
+    const localNumber = String(data.get("phone") ?? "").trim();
 
     try {
       const res = await fetch("/api/register", {
@@ -77,11 +91,10 @@ export function RegisterButtons() {
           mode,
           category: data.get("category"),
           p1_name: data.get("p1name"),
-          p1_phone: data.get("p1phone"),
+          p1_phone: `${dialCode.prefix} ${localNumber}`,
           p1_size: data.get("p1size"),
           p2_name: mode === "pair" ? data.get("p2name") : null,
           p2_size: mode === "pair" ? data.get("p2size") : null,
-          note: data.get("note"),
           sources: data.getAll("source"),
           newsletter: data.get("newsletter") === "on",
           kedvenc_szin: data.get("kedvenc_szin"), // honeypot
@@ -161,44 +174,61 @@ export function RegisterButtons() {
                   </label>
                 </div>
 
-                <fieldset className="fieldset">
-                  <legend className="legend">{copy.p1Label}</legend>
-                  <div className="grid2">
-                    <label className="field">
-                      Név
-                      <input
-                        className="input"
-                        required
-                        name="p1name"
-                        autoComplete="name"
-                        placeholder="Teljes név"
-                      />
-                    </label>
-                    <label className="field">
-                      Telefonszám
-                      <input
-                        className="input"
-                        required
-                        type="tel"
-                        name="p1phone"
-                        autoComplete="tel"
-                        placeholder="+36 ..."
-                      />
-                    </label>
-                  </div>
+                <fieldset className="player">
+                  <legend className="player__legend">{copy.p1Label}</legend>
+                  <label className="field">
+                    Teljes név
+                    <input className="input" required name="p1name" autoComplete="name" />
+                  </label>
                   <SizePicker name="p1size" label={copy.p1SizeLabel} />
                 </fieldset>
 
                 {mode === "pair" && (
-                  <fieldset className="fieldset fieldset--divided">
-                    <legend className="legend">2. játékos</legend>
+                  <fieldset className="player">
+                    <legend className="player__legend">2. játékos</legend>
                     <label className="field">
-                      Név
-                      <input className="input" required name="p2name" placeholder="Teljes név" />
+                      Teljes név
+                      <input className="input" required name="p2name" />
                     </label>
                     <SizePicker name="p2size" label="2. játékos mezmérete" />
                   </fieldset>
                 )}
+
+                <fieldset className="fieldset fieldset--divided">
+                  <legend className="legend">{copy.phoneLabel}</legend>
+                  <div className="phone-row">
+                    <label className="field">
+                      Ország
+                      <select
+                        className="input select"
+                        name="country"
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value as CountryCode)}
+                      >
+                        {PHONE_COUNTRIES.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      Telefonszám
+                      <span className="phone-field">
+                        <span className="phone-field__prefix">{dialCode.prefix}</span>
+                        <input
+                          className="phone-field__number"
+                          required
+                          type="tel"
+                          name="phone"
+                          inputMode="tel"
+                          autoComplete="tel-national"
+                          placeholder={dialCode.example}
+                        />
+                      </span>
+                    </label>
+                  </div>
+                </fieldset>
 
                 <fieldset className="fieldset fieldset--divided">
                   <legend className="legend">Kategória</legend>
@@ -213,15 +243,6 @@ export function RegisterButtons() {
                       </label>
                     ))}
                   </div>
-                  <label className="field">
-                    {copy.noteLabel}
-                    <textarea
-                      className="textarea"
-                      name="note"
-                      rows={3}
-                      placeholder="Bármi, amit tudnunk kell"
-                    />
-                  </label>
                 </fieldset>
 
                 <fieldset className="fieldset fieldset--divided">

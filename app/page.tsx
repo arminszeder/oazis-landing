@@ -108,8 +108,8 @@ export default function Home() {
             <svg {...ICON} aria-hidden="true">
               <path d="M6.5 3h3l1.5 4-2 1.5a11 11 0 0 0 5.5 5.5L16 12l4 1.5v3a2 2 0 0 1-2.2 2A15.5 15.5 0 0 1 4 6.2 2 2 0 0 1 6.5 3z" />
             </svg>
-            <span>
-              Bármilyen kérdés esetén, keressetek minket telefonon:{" "}
+            <span className="contact__text">
+              <span>Bármilyen kérdés esetén, keressetek minket telefonon:</span>
               <a className="contact__phone" href={PHONE_HREF}>
                 {PHONE}
               </a>
