@@ -17,11 +17,13 @@ mockup and is gitignored, not part of the build.
    *Project Settings → API*:
 
    ```
-   NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+   SUPABASE_URL=https://xxxx.supabase.co
    SUPABASE_SERVICE_ROLE_KEY=eyJ...
    ```
 
-   The service key must stay server-side. Never rename it to `NEXT_PUBLIC_*`.
+   `SUPABASE_URL` is the **Project URL**, not the dashboard link in your address
+   bar. Neither variable is `NEXT_PUBLIC_*`, on purpose: those are inlined at
+   build time and never reach the browser this way.
 
 3. **Run.**
 
@@ -33,7 +35,11 @@ mockup and is gitignored, not part of the build.
 ## Deploy
 
 Push to GitHub, import in Vercel, add the same two env vars under
-*Settings → Environment Variables*. No other configuration needed.
+*Settings → Environment Variables* with **Production** ticked, then redeploy —
+Vercel applies variables only to builds made after they were added.
+
+Check a deploy with `curl https://<site>/api/health`. It reports whether the
+variables are set and the database is reachable, without echoing any values.
 
 ## How registration works
 
