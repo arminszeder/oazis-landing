@@ -106,6 +106,10 @@ export function RegisterButtons() {
         throw new Error(body?.error ?? "Ismeretlen hiba");
       }
       setStatus("done");
+      // Only once the server has accepted the entry — a failed submit is not an
+      // application. Fires for both modes, before the client-side navigation,
+      // which does not unload the document, so the beacon is not cut short.
+      window.fbq?.("track", "SubmitApplication");
       // Leave the body-scroll lock to the unmount cleanup and hand the visitor
       // to the confirmation page.
       router.push(`/koszonjuk?tipus=${mode}`);
