@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Anton, Barlow_Semi_Condensed } from "next/font/google";
-import Script from "next/script";
 import { MetaPixelPageView } from "@/components/MetaPixelPageView";
 import "./globals.css";
 
@@ -44,10 +43,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="hu" className={`${anton.variable} ${barlow.variable}`}>
-      <body>
-        {/* Meta Pixel */}
-        <Script id="meta-pixel" strategy="beforeInteractive">
-          {`!function(f,b,e,v,n,t,s)
+      {/* The Meta pixel goes in <head>, per Meta's install instructions, so it
+          fires before any page content. Next generates the rest of the head
+          around this block. */}
+      <head>
+        {/* Meta Pixel Code */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `!function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};
 if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
@@ -56,8 +59,9 @@ t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '${META_PIXEL_ID}');
-fbq('track', 'PageView');`}
-        </Script>
+fbq('track', 'PageView');`,
+          }}
+        />
         <noscript>
           <img
             height="1"
@@ -67,6 +71,9 @@ fbq('track', 'PageView');`}
             src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
           />
         </noscript>
+        {/* End Meta Pixel Code */}
+      </head>
+      <body>
         <MetaPixelPageView />
         {children}
       </body>
