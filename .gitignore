@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+.env
+.env.local
+.env*.local
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+
+# design export — source material, not part of the build
+extracted/
+*.zip
