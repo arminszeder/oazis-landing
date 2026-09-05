@@ -39,10 +39,18 @@ export async function POST(request: Request) {
     return fail("Túl sok próbálkozás. Várj egy percet, aztán próbáld újra.", 429);
   }
 
+  // A real registration is a couple of KB. Anything vastly larger is either a
+  // mistake or an attempt to make the function do pointless work.
+  const declared = Number(request.headers.get("content-length") ?? 0);
+  if (declared > 64_000) return fail("Túl nagy kérés.", 413);
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
+    return fail("Hibás kérés.");
+  }
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return fail("Hibás kérés.");
   }
 
