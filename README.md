@@ -55,6 +55,59 @@ Supabase dashboard → Table editor → `registration_overview`. `status` on the
 `registrations` table (`new` / `contacted` / `paid` / `cancelled`) and
 `organiser_note` are there to be edited by hand as you work through the list.
 
+## The Google Sheet mirror
+
+The organising team reads entries in a Google Sheet that refreshes itself. Two
+tabs, both fed by `app/api/export/route.ts`:
+
+- **Nevezések (élő)** is a one-to-one mirror of the table, rewritten in full on
+  every sync and sheet-protected so only the spreadsheet owner can type in it.
+- **Csapat munkalap** starts as the same rows plus a few blank columns of the
+  team's own. The sync only ever *appends* here, keyed on the registration id,
+  so a pair the team swapped around by hand survives the next refresh.
+
+That split is deliberate. Tab one always tells you what people actually
+submitted, tab two is where reality gets tracked, and neither can quietly
+overwrite the other.
+
+### Setting it up
+
+1. Generate a token with `openssl rand -hex 32`. Add it as `EXPORT_TOKEN` in
+   Vercel under *Settings → Environment Variables* with **Production** ticked,
+   and redeploy.
+
+2. Create the spreadsheet, then *Extensions → Apps Script*, and paste
+   `scripts/oazis-sheets-sync.gs` over the default file.
+
+3. In the script's *Project Settings → Script Properties*, add:
+
+   ```
+   EXPORT_URL    https://<site>/api/export
+   EXPORT_TOKEN  <the same token>
+   ```
+
+   Script properties are not visible to people who merely have edit access to
+   the spreadsheet, which is why the token lives there and not in a cell.
+
+4. Run `setUpSync` once. It grants the permissions, creates a 10 minute timer
+   and does a first sync. An **Oázis** menu appears in the spreadsheet for
+   syncing on demand.
+
+5. Share the spreadsheet with the team as **editors**, by named address rather
+   than "anyone with the link" — the rows carry phone numbers.
+
+Adding a column to `COLUMNS` in the export route puts it in both tabs on the
+next sync. Team columns are configured at the top of the `.gs` file.
+
+### Caveats
+
+- The working tab reflects a registration as it looked when it first appeared.
+  Later changes made in Supabase, `status` included, show up on the live tab
+  only.
+- The export endpoint returns nothing at all without the token, and 401s if
+  `EXPORT_TOKEN` is unset. Check it with
+  `curl -H "x-export-token: <token>" https://<site>/api/export`.
+
 ## Changing the tournament details
 
 `lib/tournament.ts` holds categories, start times, sizes, entry fee, venue and
