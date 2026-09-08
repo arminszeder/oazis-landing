@@ -89,12 +89,17 @@ overwrite the other.
    Script properties are not visible to people who merely have edit access to
    the spreadsheet, which is why the token lives there and not in a cell.
 
-4. Run `setUpSync` once. It grants the permissions, creates a 10 minute timer
-   and does a first sync. An **Oázis** menu appears in the spreadsheet for
-   syncing on demand.
+4. Run `setUpSync` once. It grants the permissions, creates a two hourly timer
+   and does a first sync.
 
 5. Share the spreadsheet with the team as **editors**, by named address rather
    than "anyone with the link" — the rows carry phone numbers.
+
+An **Oázis** menu appears in the spreadsheet with *Szinkronizálás most*, which
+anyone with edit access can hit before a meeting, and switches to turn the
+timer on and off. Manual syncing keeps working with the timer off. The interval
+is `syncHours` at the top of the `.gs` file, and Google only accepts 1, 2, 4, 6,
+8 or 12.
 
 Adding a column to `COLUMNS` in the export route puts it in both tabs on the
 next sync. Team columns are configured at the top of the `.gs` file.

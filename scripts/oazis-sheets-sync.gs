@@ -16,7 +16,10 @@
  *   2. Projekt beállításai → Szkript tulajdonságai, két sor:
  *        EXPORT_URL    = https://<oldal>/api/export
  *        EXPORT_TOKEN  = ugyanaz, mint a Vercelen az EXPORT_TOKEN
- *   3. Futtatás: setUpSync  (engedélyt kér, majd 10 perces időzítőt állít be)
+ *   3. Futtatás: setUpSync  (engedélyt kér, majd 2 óránkénti időzítőt állít be)
+ *
+ * Kézzel bármikor frissíthető a táblázat "Oázis" menüjéből, akkor is, ha az
+ * automatikus szinkron ki van kapcsolva.
  *
  * A tokent a szkript tulajdonságai tárolják, nem a táblázat, így a csapat tagjai
  * nem látják akkor sem, ha szerkesztői joguk van.
@@ -25,7 +28,9 @@
 var CONFIG = {
   liveSheet: 'Nevezések (élő)',
   workSheet: 'Csapat munkalap',
-  syncMinutes: 10,
+  // Milyen sűrűn fusson az automatikus szinkron. A Google csak ezeket az
+  // értékeket engedi: 1, 2, 4, 6, 8, 12 óra.
+  syncHours: 2,
 
   // A csapat munkalapjának saját oszlopai. A szinkron ezeket soha nem írja,
   // csak létrehozza őket a tükrözött oszlopok után. Bővíthető.
@@ -37,24 +42,47 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Oázis')
     .addItem('Szinkronizálás most', 'syncRegistrations')
-    .addItem('Automatikus szinkron beállítása', 'setUpSync')
+    .addSeparator()
+    .addItem('Automatikus szinkron bekapcsolása', 'setUpSync')
+    .addItem('Automatikus szinkron kikapcsolása', 'stopAutoSync')
     .addToUi();
 }
 
 /** Egyszer kell lefuttatni: időzítőt állít be, és rögtön szinkronizál is. */
 function setUpSync() {
-  ScriptApp.getProjectTriggers().forEach(function (trigger) {
-    if (trigger.getHandlerFunction() === 'syncRegistrations') {
-      ScriptApp.deleteTrigger(trigger);
-    }
-  });
+  removeSyncTriggers_();
 
   ScriptApp.newTrigger('syncRegistrations')
     .timeBased()
-    .everyMinutes(CONFIG.syncMinutes)
+    .everyHours(CONFIG.syncHours)
     .create();
 
   syncRegistrations();
+  toast_('Automatikus szinkron bekapcsolva, ' + CONFIG.syncHours + ' óránként.');
+}
+
+/**
+ * Kikapcsolja az automatikus szinkront. A táblázat ettől nem sérül, csak
+ * magától nem frissül többé — a menüből kézzel bármikor lehet.
+ */
+function stopAutoSync() {
+  var removed = removeSyncTriggers_();
+  toast_(
+    removed
+      ? 'Automatikus szinkron kikapcsolva. A menüből kézzel továbbra is frissíthető.'
+      : 'Nem volt bekapcsolva automatikus szinkron.'
+  );
+}
+
+function removeSyncTriggers_() {
+  var removed = 0;
+  ScriptApp.getProjectTriggers().forEach(function (trigger) {
+    if (trigger.getHandlerFunction() === 'syncRegistrations') {
+      ScriptApp.deleteTrigger(trigger);
+      removed += 1;
+    }
+  });
+  return removed;
 }
 
 /** A tényleges munka. Erre van kötve az időzítő. */
@@ -63,7 +91,21 @@ function syncRegistrations() {
   var book = SpreadsheetApp.getActiveSpreadsheet();
 
   writeLiveSheet_(sheetNamed_(book, CONFIG.liveSheet), payload);
-  appendToWorkSheet_(sheetNamed_(book, CONFIG.workSheet), payload);
+  var added = appendToWorkSheet_(sheetNamed_(book, CONFIG.workSheet), payload);
+
+  toast_(added ? added + ' új nevezés érkezett.' : 'Kész, új nevezés nincs.');
+}
+
+/**
+ * Visszajelzés a menüből indított futásnál. Időzítőből futva nincs megnyitott
+ * táblázat, amin megjelenhetne, ezért a hiba itt nem érdekes.
+ */
+function toast_(message) {
+  try {
+    SpreadsheetApp.getActiveSpreadsheet().toast(message, 'Oázis szinkron', 5);
+  } catch (err) {
+    // Időzítőből futott, nincs kinek szólni.
+  }
 }
 
 /** ------------------------------------------------------------------ */
@@ -160,7 +202,7 @@ function appendToWorkSheet_(sheet, payload) {
   var fresh = payload.rows.filter(function (row) {
     return !known[String(row[0])];
   });
-  if (!fresh.length) return;
+  if (!fresh.length) return 0;
 
   // A csapat oszlopait üresen hagyjuk, hogy legyen mit kitölteni.
   var padded = fresh.map(function (row) {
@@ -168,6 +210,7 @@ function appendToWorkSheet_(sheet, payload) {
   });
 
   sheet.getRange(lastRow + 1, 1, padded.length, columnCount).setValues(padded);
+  return padded.length;
 }
 
 /**
