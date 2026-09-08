@@ -16,7 +16,16 @@ const ICON = {
 };
 
 const PERKS = [
-  { label: "Welcome Drink", d: ["M8 3h8l-1 5a3 3 0 0 1-6 0L8 3z", "M12 13v7", "M9 21h6"] },
+  {
+    label: "INDULÓCSOMAG",
+    d: [
+      "M20 12v9H4v-9",
+      "M2 8h20v4H2V8z",
+      "M12 21V8",
+      "M12 8H7.5a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8z",
+      "M12 8h4.5a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8z",
+    ],
+  },
   {
     label: "Egy tál meleg étel",
     d: ["M3 11h18a9 9 0 0 1-18 0z", "M9 7c0-1.5 1.5-2 1.5-3.5", "M14 7c0-1.5 1.5-2 1.5-3.5"],
