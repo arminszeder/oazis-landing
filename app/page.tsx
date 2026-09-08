@@ -17,7 +17,7 @@ const ICON = {
 
 const PERKS = [
   {
-    label: "INDULÓCSOMAG",
+    label: "Indulócsomag",
     d: [
       "M20 12v9H4v-9",
       "M2 8h20v4H2V8z",
