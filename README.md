@@ -49,69 +49,45 @@ requirements), drops honeypot submissions, throttles to 5 posts per IP per
 minute, and inserts with the service key. RLS has no policies, so the anon key
 can neither read nor write — the route is the only way in.
 
-## Reading entries
+## The organiser dashboard
 
-Supabase dashboard → Table editor → `registration_overview`. `status` on the
-`registrations` table (`new` / `contacted` / `paid` / `cancelled`) and
-`organiser_note` are there to be edited by hand as you work through the list.
+`/admin` is where the team works the list. Built for a phone, because that is
+what you have on you at the club.
 
-## The Google Sheet mirror
+- **Nevezések.** Every entry as a card: tap the number to call, one tap to move
+  someone between Új / Megkeresve / Fizetett / Lemondva, a free-text note per
+  entry. Search covers names, phone numbers and notes.
+- **Párosítás.** Solo entrants by category. Tap two names to pair them, tap a
+  formed pair to split it. The link is symmetric and stored in `paired_with`,
+  so nothing the entrant submitted is overwritten.
+- **Összesítés.** Entries and players per category, status tally, fees collected
+  against fees outstanding, shirt sizes totalled for the printer, and a CSV
+  download.
 
-The organising team reads entries in a Google Sheet that refreshes itself. Two
-tabs, both fed by `app/api/export/route.ts`:
-
-- **Nevezések (élő)** is a one-to-one mirror of the table, rewritten in full on
-  every sync and sheet-protected so only the spreadsheet owner can type in it.
-- **Csapat munkalap** starts as the same rows plus a few blank columns of the
-  team's own. The sync only ever *appends* here, keyed on the registration id,
-  so a pair the team swapped around by hand survives the next refresh.
-
-That split is deliberate. Tab one always tells you what people actually
-submitted, tab two is where reality gets tracked, and neither can quietly
-overwrite the other.
+Every change is stamped with `updated_by` and `updated_at`, so "who marked this
+one paid" has an answer. Writes are optimistic and roll back visibly if the
+server rejects them.
 
 ### Setting it up
 
-1. Generate a token with `openssl rand -hex 32`. Add it as `EXPORT_TOKEN` in
-   Vercel under *Settings → Environment Variables* with **Production** ticked,
-   and redeploy.
+1. Run `supabase/migrations/0002_admin.sql` in the Supabase SQL editor. It adds
+   `updated_at`, `updated_by` and `paired_with`, and rebuilds
+   `registration_overview` to match. Safe to run twice.
 
-2. Create the spreadsheet, then *Extensions → Apps Script*, and paste
-   `scripts/oazis-sheets-sync.gs` over the default file.
+2. Set `ADMIN_PASSWORD` in `.env.local` and in Vercel (Production ticked, then
+   redeploy). Give that password to the organisers.
 
-3. In the script's *Project Settings → Script Properties*, add:
+Login asks for a name alongside the password. It is not authentication, it is
+attribution: it decides whose name lands on the changes. The session cookie is
+signed with a key derived from the password, so changing the password in Vercel
+signs everyone out, and that is how you take access away from someone.
 
-   ```
-   EXPORT_URL    https://<site>/api/export
-   EXPORT_TOKEN  <the same token>
-   ```
+For a club of a handful of organisers over a few weeks this is the right amount
+of ceremony. If entries ever needed per-person permissions or a real audit
+trail, this is where you would swap in Supabase Auth.
 
-   Script properties are not visible to people who merely have edit access to
-   the spreadsheet, which is why the token lives there and not in a cell.
-
-4. Run `setUpSync` once. It grants the permissions, creates a two hourly timer
-   and does a first sync.
-
-5. Share the spreadsheet with the team as **editors**, by named address rather
-   than "anyone with the link" — the rows carry phone numbers.
-
-An **Oázis** menu appears in the spreadsheet with *Szinkronizálás most*, which
-anyone with edit access can hit before a meeting, and switches to turn the
-timer on and off. Manual syncing keeps working with the timer off. The interval
-is `syncHours` at the top of the `.gs` file, and Google only accepts 1, 2, 4, 6,
-8 or 12.
-
-Adding a column to `COLUMNS` in the export route puts it in both tabs on the
-next sync. Team columns are configured at the top of the `.gs` file.
-
-### Caveats
-
-- The working tab reflects a registration as it looked when it first appeared.
-  Later changes made in Supabase, `status` included, show up on the live tab
-  only.
-- The export endpoint returns nothing at all without the token, and 401s if
-  `EXPORT_TOKEN` is unset. Check it with
-  `curl -H "x-export-token: <token>" https://<site>/api/export`.
+`registration_overview` in the Supabase table editor stays available as the
+raw read-only view.
 
 ## Changing the tournament details
 
